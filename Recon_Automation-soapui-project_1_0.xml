@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project activeEnvironment="Default" name="Template_Server_Automation_Project" resourceRoot="" soapui-version="4.5.1" xmlns:con="http://eviware.com/soapui/config"><con:settings/><con:testSuite name="Template_Server_Automation_Suite"><con:settings><con:setting id="IncludeOverview">true</con:setting><con:setting id="IncludeResults">true</con:setting><con:setting id="FlowLayout">false</con:setting><con:setting id="ErrorDetails">true</con:setting><con:setting id="IncludeCoverage">true</con:setting></con:settings><con:runType>SEQUENTIAL</con:runType><con:testCase failOnError="true" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="AutomationTC" searchProperties="true" id="847c5567-4ea7-420b-a412-e29556c1f991"><con:settings/><con:testStep type="groovy" name="Suite_Script" id="06da2e05-0fa5-47a4-81a7-da7e40d9f500"><con:settings/><con:config><script><![CDATA[
+/*################################################################
+# @Author : Kanchan Velhal								#
+# @Description : SWIFT RECON Automation Test Suite			#
+				
+################################################################*/
+
+
+import groovyx.net.http.*
+import static groovyx.net.http.ContentType.*
+import static groovyx.net.http.Method.*
+
+import jxl.*
+import jxl.write.*
+
+Workbook workbook = Workbook.getWorkbook(new File("C:\Users\Kanchan\Desktop\Kanchan\Projects\Well Fargo\AutomationTestCases.xls"))
+for(j=0;j<2;j++){  //Iterate Over the sheets
+Sheet sheet = workbook.getSheet(j)
+Cell server = sheet.getCell(1,1)  // Hardcoded Server IP/Name from xls B2 Cell
+for(i=1; i<sheet.getRows(); i++){ // Iterate over the rows
+Cell atc = sheet.getCell(0,i) // ******* BEWARE [COLUMN,ROW] ************//
+if(atc.getContents().toString().equals("")) // Blank Rows skip to next
+	continue
+Cell path = sheet.getCell(1,i) 
+Cell status = sheet.getCell(2,i)
+Cell content_type = sheet.getCell(3,i)
+log.info "#################### Zakir: Starting Step- ${atc.getContents()} ####################"
+def url = server.getContents().toString()+path.getContents().toString()
+log.info "URL- $url"
+log.info "Expected status and content_type ${status.getContents()} <--> ${content_type.getContents()}"
+
+def http = new HTTPBuilder()
+try{
+http.request( url, GET, TEXT) { req ->
+ // uri.path = '/Templatewebservices/v1/user/vehicles/11111111111111111/json'
+ // uri.query = [ device:'IPHONE', deviceOS: 'iOS4' ]
+ // headers.'User-Agent' = "Mozilla/5.0 Firefox/3.0.4"
+  headers.Accept = sheet.getCell(3,1).getContents().toString()
+ 
+  response.success = { resp, reader ->
+    assert resp.statusLine.statusCode == 200
+    def resp_status = resp.statusLine.toString().normalize().substring(9)// Given up debugging this one hardcoding 9 %$#@!*&^%)(
+    log.info "Actual status and content_type: $resp_status <--> ${resp.headers.'Content-Type'}"
+    
+    log.info reader.text //Body
+    // Compare and declare Result
+    if((status.getContents().toString().equals(resp_status)) 
+    && (content_type.getContents().toString().equals(resp.headers.'Content-Type')))
+    {
+    	log.info "Step- ${atc.getContents()} ****** PASS ******"
+    }
+    else
+    {
+    	log.info "Step- ${atc.getContents()} ****** FAIL ******"
+    }
+       
+  }
+ 
+  response.'404' = { resp, reader ->
+   def resp_status = resp.statusLine.toString().normalize().substring(9)
+   log.info "Actual status: $resp_status"
+   if(status.getContents().toString().equals(resp_status))
+        log.info "Step- ${atc.getContents()} ****** PASS ******"
+   else
+        log.info "Step- ${atc.getContents()} ****** FAIL ******"
+  }
+    response.'400' = { resp, reader ->
+   def resp_status = resp.statusLine.toString().normalize().substring(9)
+   log.info "Actual status: $resp_status"
+   if(status.getContents().toString().equals(resp_status))
+        log.info "Step- ${atc.getContents()} ****** PASS ******"
+   else
+        log.info "Step- ${atc.getContents()} ****** FAIL ******"
+  }
+}
+} //End of try
+catch(MalformedURLException e)
+{
+	log.info "Malformed URL Exception in step $i"
+	log.info "Step- ${atc.getContents()} ****** NOT TESTED ******"
+}
+catch(URISyntaxException e)
+{
+	log.info "URISyntaxException in step $i"
+	log.info "Step- ${atc.getContents()} ****** NOT TESTED ******"
+}
+catch(HttpResponseException e)
+{
+	log.info "HttpResponseException in step $i"
+	log.info "Step- ${atc.getContents()} ****** NOT TESTED ******"
+}
+log.info "#################### Zakir: End of Step- ${atc.getContents()} ####################"
+} //End of Loop i
+} //End of Loop j
+workbook.close()]]></script></con:config></con:testStep><con:properties/><con:reportParameters/><con:breakPoints><con:testStepId>06da2e05-0fa5-47a4-81a7-da7e40d9f500</con:testStepId><con:status>NONE</con:status><con:properties/></con:breakPoints></con:testCase><con:properties/><con:setupScript/><con:tearDownScript/><con:reportParameters/></con:testSuite><con:requirements/><con:properties/><con:wssContainer/><con:databaseConnectionContainer/><con:reporting><con:reportTemplates/><con:xmlTemplates/><con:parameters/></con:reporting></con:soapui-project>

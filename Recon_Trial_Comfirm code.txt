@@ -1,0 +1,20 @@
+import jxl.*
+import jxl.write.*
+
+Workbook workbook = Workbook.getWorkbook(new File("C:\\Users\\Kanchan\\Desktop\\Kanchan\\Projects\\WellFargo\\AutomationTestCases.xls"))
+
+for(j=0;j<2;j++){  //Iterate Over the sheets
+Sheet sheet = workbook.getSheet(j)
+Cell server = sheet.getCell(1,1)  // Hardcoded Server IP/Name from xls B2 Cell
+for(i=1; i<sheet.getRows(); i++){ // Iterate over the rows
+Cell atc = sheet.getCell(0,i) // ******* BEWARE [COLUMN,ROW] ************//
+if(atc.getContents().toString().equals("")) // Blank Rows skip to next
+	continue
+Cell path = sheet.getCell(1,i) 
+Cell status = sheet.getCell(2,i)
+Cell content_type = sheet.getCell(3,i)
+log.info "#################### Kanchan: Starting Step- ${atc.getContents()} ####################"
+def url = server.getContents().toString()+path.getContents().toString()
+log.info "URL- $url"
+log.info "Expected status and content_type ${status.getContents()} <--> ${content_type.getContents()}" 
+
